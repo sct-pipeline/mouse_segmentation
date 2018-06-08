@@ -23,6 +23,7 @@ sct_crop_image -i Pre_contrast.nii.gz -dim 0,2 -start 20,40 -end 290,80 -o Pre_c
 
 ```bash
 # create an affine transformation to stretch the image
+# note: the values set on FixedParameters correspond to the center of the zoom (typically, the center of your image). To find it, open fslview and look at the field "Coordinates: Scanner anatomical". Then, use the negative values.
 echo "#Insight Transform File V1.0" > affine_stretch.txt
 echo "#Transform 0" >> affine_stretch.txt
 echo "Transform: AffineTransform_double_3_3" >> affine_stretch.txt
