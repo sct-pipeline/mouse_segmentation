@@ -10,6 +10,7 @@ SCT development version (master:51f9f79ffad0cbdb3b865273faa4aa605fced2df). Next 
 
 Below is an example of a mouse MRI from which you would like to segment the spinal cord:
 
+
 SCT algorithms don't work out-of-the-box because of the different scaling, and also the low cord/CSF contrast. Below are a series of commands that you can do to obtain acceptable segmentation results.
 
 ```bash
