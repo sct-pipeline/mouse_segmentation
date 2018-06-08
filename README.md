@@ -15,7 +15,7 @@ Below is an example of a mouse MRI from which you would like to segment the spin
 SCT algorithms don't work out-of-the-box because of the different scaling, and also the low cord/CSF contrast. Below are a series of commands that you can do to obtain acceptable segmentation results.
 
 ```bash
-# sct_crop_image -i Pre_contrast.nii.gz -dim 0,1,2 -start 80,200,40 -end 230,620,80 -o Pre_contrast_crop.nii.gz
+# crop image around the spinal cord (for faster processing). Note: leave some space for the stretching (see below)
 sct_crop_image -i Pre_contrast.nii.gz -dim 0,2 -start 20,40 -end 290,80 -o Pre_contrast_crop.nii.gz
 ```
 
