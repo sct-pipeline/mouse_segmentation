@@ -10,23 +10,39 @@ SCT development version (master:51f9f79ffad0cbdb3b865273faa4aa605fced2df). Next 
 
 Below is an example of a mouse MRI from which you would like to segment the spinal cord:
 
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast.png" width="600">
 
 SCT algorithms don't work out-of-the-box because of the different scaling, and also the low cord/CSF contrast. Below are a series of commands that you can do to obtain acceptable segmentation results.
 
 ```bash
 # sct_crop_image -i Pre_contrast.nii.gz -dim 0,1,2 -start 80,200,40 -end 230,620,80 -o Pre_contrast_crop.nii.gz
 sct_crop_image -i Pre_contrast.nii.gz -dim 0,2 -start 20,40 -end 290,80 -o Pre_contrast_crop.nii.gz
+```
 
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop.png" width="600">
+
+```bash
+# create an affine transformation to stretch the image
+# TODO
 # stretch segmentation to match physical dimensions of human spinal cord (required by segmentation algorithm)
 isct_antsApplyTransforms -d 3 -i Pre_contrast_crop.nii.gz -o Pre_contrast_crop_stretched.nii.gz -t affine_stretch.txt -r Pre_contrast_crop.nii.gz
+```
 
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop_stretched.png" width="600">
+
+```bash
 # manually label a few points across spinal cord centerline (see README)
 sct_propseg -i Pre_contrast_crop_stretched.nii.gz -init-centerline viewer -c t1
+```
 
+```bash
 # smooth spinal cord
 sct_smooth_spinalcord -i Pre_contrast_crop_stretched.nii.gz -s Pre_contrast_crop_stretched_labels_viewer.nii.gz -smooth 5
+```
 
+```bash
 sct_propseg -i Pre_contrast_crop_stretched_smooth.nii.gz -init-centerline Pre_contrast_crop_stretched_labels_viewer.nii.gz -c t1 -radius 2
+
 
 # Generate compress transformation
 # TODO
