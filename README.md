@@ -23,7 +23,12 @@ sct_crop_image -i Pre_contrast.nii.gz -dim 0,2 -start 20,40 -end 290,80 -o Pre_c
 
 ```bash
 # create an affine transformation to stretch the image
-# TODO
+echo "#Insight Transform File V1.0" > affine_stretch.txt
+echo "#Transform 0" >> affine_stretch.txt
+echo "Transform: AffineTransform_double_3_3" >> affine_stretch.txt
+echo "Parameters: 0.5 0 0 0 0.5 0 0 0 0.5 0 0 0" >> affine_stretch.txt
+echo "FixedParameters: -1.2 -68" >> affine_stretch.txt
+
 # stretch segmentation to match physical dimensions of human spinal cord (required by segmentation algorithm)
 isct_antsApplyTransforms -d 3 -i Pre_contrast_crop.nii.gz -o Pre_contrast_crop_stretched.nii.gz -t affine_stretch.txt -r Pre_contrast_crop.nii.gz
 ```
@@ -31,21 +36,29 @@ isct_antsApplyTransforms -d 3 -i Pre_contrast_crop.nii.gz -o Pre_contrast_crop_s
 <img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop_stretched.png" width="600">
 
 ```bash
-# manually label a few points across spinal cord centerline (see README)
+# manually label a few points across spinal cord centerline (see figure below, use mode "custom")
 sct_propseg -i Pre_contrast_crop_stretched.nii.gz -init-centerline viewer -c t1
 ```
 
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_labeling.png" width="600">
+
 ```bash
-# smooth spinal cord
+# apply smoothing kernel (5mm) along spinal cord centerline
 sct_smooth_spinalcord -i Pre_contrast_crop_stretched.nii.gz -s Pre_contrast_crop_stretched_labels_viewer.nii.gz -smooth 5
 ```
 
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop_stretched_smooth.png" width="600">
+
 ```bash
+# segment spinal cord (using pre-existing manual labels)
 sct_propseg -i Pre_contrast_crop_stretched_smooth.nii.gz -init-centerline Pre_contrast_crop_stretched_labels_viewer.nii.gz -c t1 -radius 2
 
-
-# Generate compress transformation
-# TODO
+# create compress affine transformation
+echo "#Insight Transform File V1.0" > affine_compress.txt
+echo "#Transform 0" >> affine_compress.txt
+echo "Transform: AffineTransform_double_3_3" >> affine_compress.txt
+echo "Parameters: 2 0 0 0 2 0 0 0 2 0 0 0" >> affine_compress.txt
+echo "FixedParameters: -1.2 -68" >> affine_compress.txt
 
 # bring segmentation back to original space (compress)
 isct_antsApplyTransforms -d 3 -i Pre_contrast_crop_stretched_smooth_seg.nii.gz -o Pre_contrast_crop_stretched_smooth_seg_compressed.nii.gz -t affine_compress.txt -r Pre_contrast_crop_stretched.nii.gz
@@ -53,6 +66,8 @@ isct_antsApplyTransforms -d 3 -i Pre_contrast_crop_stretched_smooth_seg.nii.gz -
 # Open segmentation overlaid on original volume
 fsleyes Pre_contrast.nii.gz Pre_contrast_crop_stretched_smooth_seg_compressed.nii.gz -cm red &
 ```
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_seg_on_image.gif" width="600">
+
 
 ## License
 
