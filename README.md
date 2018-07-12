@@ -3,71 +3,46 @@ This tutorial explains how to segment spinal cords from small animals (e.g. mous
 
 ## Dependencies
 
-SCT development version (master:51f9f79ffad0cbdb3b865273faa4aa605fced2df). Next stable release: v3.2.1.
-
+SCT development version (master:d2c27fe61c51a4faa9e04b524df9f054a6edcf60). Next stable release: v3.2.3.
 
 ## Getting started
 
 Below is an example of a mouse MRI from which you would like to segment the spinal cord:
 
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast.png" width="600">
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_data.png" width="600">
 
 SCT algorithms don't work out-of-the-box because of the different scaling, and also the low cord/CSF contrast. Below are a series of commands that you can do to obtain acceptable segmentation results.
 
 ```bash
-# crop image around the spinal cord (for faster processing). Note: leave some space for the stretching (see below)
-sct_crop_image -i Pre_contrast.nii.gz -dim 0,2 -start 20,40 -end 290,80 -o Pre_contrast_crop.nii.gz
+# crop image around the spinal cord (for faster processing). Find the cropping coordinates using a viewer, e.g. FSLeyes.
+sct_crop_image -i data.nii.gz -dim 0,1,2 -start 90,200,40 -end 240,600,80 -o data_crop.nii.gz
 ```
 
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop.png" width="600">
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_data_crop.png" width="600">
 
 ```bash
-# create an affine transformation to stretch the image
-# note: the values set on FixedParameters correspond to the center of the zoom (typically, the center of your image). To find it, open fslview and look at the field "Coordinates: Scanner anatomical". Then, use the negative values.
-echo "#Insight Transform File V1.0" > affine_stretch.txt
-echo "#Transform 0" >> affine_stretch.txt
-echo "Transform: AffineTransform_double_3_3" >> affine_stretch.txt
-echo "Parameters: 0.5 0 0 0 0.5 0 0 0 0.5 0 0 0" >> affine_stretch.txt
-echo "FixedParameters: -1.2 -68" >> affine_stretch.txt
-
-# stretch segmentation to match physical dimensions of human spinal cord (required by segmentation algorithm)
-isct_antsApplyTransforms -d 3 -i Pre_contrast_crop.nii.gz -o Pre_contrast_crop_stretched.nii.gz -t affine_stretch.txt -r Pre_contrast_crop.nii.gz
+# Manually label a few points along spinal cord centerline (see figure below)
+# Tips: The flag -rescale 3 adjusts the dimension of the image so that the mouse 
+# spinal cord size approximately matches that of human, on which PropSeg algorithm
+# has been tuned and optimized.
+sct_propseg -i data_crop.nii.gz -c t1 -init-centerline viewer -rescale 3
 ```
 
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop_stretched.png" width="600">
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_data_crop_labeling.png" width="600">
 
 ```bash
-# manually label a few points across spinal cord centerline (see figure below, use mode "custom")
-sct_propseg -i Pre_contrast_crop_stretched.nii.gz -init-centerline viewer -c t1
+# Smoothing along spinal cord centerline to enhance contrast between cord and CSF
+sct_smooth_spinalcord -i data_crop.nii.gz -s data_crop_centerline.nii.gz -smooth 5
 ```
 
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_labeling.png" width="600">
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_data_crop_smooth.png" width="600">
 
 ```bash
-# apply smoothing kernel (5mm) along spinal cord centerline
-sct_smooth_spinalcord -i Pre_contrast_crop_stretched.nii.gz -s Pre_contrast_crop_stretched_labels_viewer.nii.gz -smooth 5
+# segment spinal cord (using pre-existing centerline as initialization)
+sct_propseg -i data_crop_smooth.nii.gz -c t1 -init-centerline data_crop_centerline.nii.gz -rescale 3
 ```
 
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_Pre_contrast_crop_stretched_smooth.png" width="600">
-
-```bash
-# segment spinal cord (using pre-existing manual labels)
-sct_propseg -i Pre_contrast_crop_stretched_smooth.nii.gz -init-centerline Pre_contrast_crop_stretched_labels_viewer.nii.gz -c t1 -radius 2
-
-# create compress affine transformation
-echo "#Insight Transform File V1.0" > affine_compress.txt
-echo "#Transform 0" >> affine_compress.txt
-echo "Transform: AffineTransform_double_3_3" >> affine_compress.txt
-echo "Parameters: 2 0 0 0 2 0 0 0 2 0 0 0" >> affine_compress.txt
-echo "FixedParameters: -1.2 -68" >> affine_compress.txt
-
-# bring segmentation back to original space (compress)
-isct_antsApplyTransforms -d 3 -i Pre_contrast_crop_stretched_smooth_seg.nii.gz -o Pre_contrast_crop_stretched_smooth_seg_compressed.nii.gz -t affine_compress.txt -r Pre_contrast_crop_stretched.nii.gz
-
-# Open segmentation overlaid on original volume
-fsleyes Pre_contrast.nii.gz Pre_contrast_crop_stretched_smooth_seg_compressed.nii.gz -cm red &
-```
-<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_seg_on_image.gif" width="600">
+<img src="https://github.com/sct-pipeline/mouse_segmentation/blob/master/doc/fig_seg_on_image.gif.gif" width="600">
 
 
 ## License
