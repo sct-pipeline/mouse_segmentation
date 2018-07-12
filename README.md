@@ -22,9 +22,8 @@ sct_crop_image -i data.nii.gz -dim 0,1,2 -start 90,200,40 -end 240,600,80 -o dat
 
 ```bash
 # Manually label a few points along spinal cord centerline (see figure below)
-# Tips: The flag -rescale 3 adjusts the dimension of the image so that the mouse 
-# spinal cord size approximately matches that of human, on which PropSeg algorithm
-# has been tuned and optimized.
+# Tips: The flag -rescale 3 adjusts the dimension of the image so that the mouse spinal cord size approximately matches 
+# that of human, on which PropSeg algorithm has been tuned and optimized.
 sct_propseg -i data_crop.nii.gz -c t1 -init-centerline viewer -rescale 3
 ```
 
